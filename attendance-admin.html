@@ -3,67 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Management System</title>
+<title>User System</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
-  font-family:'Poppins',sans-serif;
-}
-
 body{
+  font-family:Poppins,sans-serif;
   background:#eef4ff;
   padding:20px;
 }
 
-/* CONTAINER */
 .container{
-  max-width:1000px;
+  max-width:900px;
   margin:auto;
 }
 
-/* HEADER */
-h1{
-  margin-bottom:20px;
-  color:#0a1b45;
-}
-
-/* CARD */
 .card{
-  background:white;
+  background:#fff;
   padding:20px;
   border-radius:16px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.05);
   margin-bottom:20px;
-}
-
-/* FORM */
-.form-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:12px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.05);
 }
 
 input{
+  width:100%;
   padding:12px;
+  margin-bottom:10px;
   border:none;
   background:#f4f7ff;
   border-radius:10px;
-  font-size:14px;
 }
 
-/* BUTTON */
 button{
-  margin-top:15px;
-  padding:12px 18px;
-  border:none;
-  border-radius:10px;
+  padding:12px 16px;
   background:#0a66ff;
   color:white;
+  border:none;
+  border-radius:10px;
   cursor:pointer;
 }
 
@@ -71,7 +49,6 @@ button:hover{
   background:#084dcc;
 }
 
-/* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
@@ -80,21 +57,17 @@ table{
 th,td{
   padding:12px;
   border-bottom:1px solid #eee;
-  text-align:left;
 }
 
 th{
   background:#f8fbff;
-  color:#0a1b45;
 }
 
-/* PASSCODE */
 .code{
-  font-weight:600;
   color:#0a66ff;
+  font-weight:600;
 }
 
-/* TOAST */
 #toast{
   position:fixed;
   top:20px;
@@ -105,13 +78,6 @@ th{
   border-radius:10px;
   display:none;
 }
-
-/* MOBILE */
-@media(max-width:700px){
-  .form-grid{
-    grid-template-columns:1fr;
-  }
-}
 </style>
 </head>
 
@@ -121,28 +87,22 @@ th{
 
 <div class="container">
 
-<h1>User Management System</h1>
-
-<!-- CREATE USER -->
-<div class="card">
-
 <h2>Create User</h2>
 
-<div class="form-grid">
+<div class="card">
+
 <input type="text" id="name" placeholder="Full Name">
 <input type="text" id="phone" placeholder="Phone Number">
 <input type="text" id="department" placeholder="Department">
 <input type="text" id="passcode" placeholder="Auto Passcode" readonly>
-</div>
 
 <button onclick="createUser()">Create User</button>
 
 </div>
 
-<!-- USERS LIST -->
 <div class="card">
 
-<h2>All Created Users</h2>
+<h2>All Users (Alphabetical Order)</h2>
 
 <table>
 <thead>
@@ -156,6 +116,7 @@ th{
 </thead>
 
 <tbody id="usersTable"></tbody>
+
 </table>
 
 </div>
@@ -167,7 +128,6 @@ th{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCtLoXXW7Rkkja7HSBrkkcGqZsbj7kQLjw",
   authDomain: "year2-9413b.firebaseapp.com",
@@ -178,7 +138,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
-/* TOAST */
 function toast(msg){
   const t = document.getElementById("toast");
   t.innerText = msg;
@@ -186,57 +145,68 @@ function toast(msg){
   setTimeout(()=>t.style.display="none",2000);
 }
 
-/* PASSCODE GENERATOR (NO DUPLICATE) */
-let existingCodes = new Set();
+/* UNIQUE CODE */
+let codes = new Set();
 
-function generatePasscode(){
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+function genCode(){
+  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code;
 
   do{
-    code = "";
+    code="";
     for(let i=0;i<6;i++){
       code += chars[Math.floor(Math.random()*chars.length)];
     }
-  }while(existingCodes.has(code));
+  }while(codes.has(code));
 
-  existingCodes.add(code);
+  codes.add(code);
   return code;
 }
 
-/* REAL-TIME LOAD USERS */
-function loadUsers(){
+/* SINGLE CLEAN RENDER FUNCTION (IMPORTANT FIX) */
+function renderUsers(users){
 
-  onValue(ref(db,"users"), (snapshot)=>{
+  users.sort((a,b)=>
+    (a.name || "").localeCompare(b.name || "")
+  );
 
-    let html = "";
+  let html="";
 
-    existingCodes.clear();
-
-    snapshot.forEach(child=>{
-
-      const data = child.val();
-
-      existingCodes.add(data.passcode);
-
-      html += `
-        <tr>
-          <td>${data.name}</td>
-          <td>${data.phone}</td>
-          <td>${data.department || "-"}</td>
-          <td class="code">${data.passcode}</td>
-          <td>${new Date(data.createdAt).toLocaleString()}</td>
-        </tr>
-      `;
-    });
-
-    document.getElementById("usersTable").innerHTML = html;
-
+  users.forEach(u=>{
+    html += `
+      <tr>
+        <td>${u.name || ""}</td>
+        <td>${u.phone || ""}</td>
+        <td>${u.department || "-"}</td>
+        <td class="code">${u.passcode || ""}</td>
+        <td>${new Date(u.createdAt).toLocaleString()}</td>
+      </tr>
+    `;
   });
 
+  document.getElementById("usersTable").innerHTML = html;
 }
 
-/* CREATE USER */
+/* REALTIME LISTENER (FIXED) */
+let allUsers = [];
+
+onValue(ref(db,"users"), (snap)=>{
+
+  allUsers = [];
+
+  codes.clear();
+
+  snap.forEach(s=>{
+    let d = s.val();
+    allUsers.push(d);
+    codes.add(d.passcode);
+  });
+
+  renderUsers(allUsers);
+
+});
+
+/* CREATE USER (FIXED FLOW) */
 window.createUser = async function(){
 
 const name = document.getElementById("name").value.trim();
@@ -244,16 +214,15 @@ const phone = document.getElementById("phone").value.trim();
 const department = document.getElementById("department").value.trim();
 
 if(!name || !phone){
-toast("Fill all required fields");
+toast("Fill required fields");
 return;
 }
 
-const passcode = generatePasscode();
+const passcode = genCode();
+
 document.getElementById("passcode").value = passcode;
 
-const newUserRef = push(ref(db,"users"));
-
-await set(newUserRef,{
+await set(push(ref(db,"users")),{
 name,
 phone,
 department,
@@ -261,6 +230,7 @@ passcode,
 createdAt:Date.now()
 });
 
+/* IMPORTANT: UI refresh is automatic via onValue */
 toast("User created successfully ✅");
 
 document.getElementById("name").value="";
@@ -269,9 +239,6 @@ document.getElementById("department").value="";
 document.getElementById("passcode").value="";
 
 };
-
-/* INIT */
-loadUsers();
 
 </script>
 
