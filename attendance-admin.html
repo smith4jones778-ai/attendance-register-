@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Admin Panel</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{
+  --primary:#2563eb;
+  --accent:#0ea5e9;
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#e2e8f0;
+  --danger:#ef4444;
+  --success:#22c55e;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial;}
+
+body{background:var(--bg);color:var(--text);}
+
+/* Header */
+header{
+  padding:16px;
+  text-align:center;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  font-weight:bold;
+}
+
+/* Container */
+.container{
+  padding:16px;
+  max-width:1000px;
+  margin:auto;
+}
+
+/* Form */
+.form-card{
+  background:var(--card);
+  padding:16px;
+  border-radius:12px;
+  margin-bottom:20px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+}
+
+button{
+  padding:10px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.btn-primary{background:var(--primary);color:white;width:100%;}
+.btn-success{background:var(--success);color:white;width:100%;}
+.btn-danger{background:var(--danger);color:white;}
+
+/* Table */
+.table-card{
+  background:var(--card);
+  padding:12px;
+  border-radius:12px;
+  overflow-x:auto;
+}
+
+table{width:100%;border-collapse:collapse;}
+th,td{padding:10px;font-size:14px;}
+th{background:var(--primary);}
+tr:nth-child(even){background:#334155;}
+
+.actions{
+  display:flex;
+  gap:5px;
+}
+
+@media(max-width:600px){
+  th,td{font-size:12px;padding:8px;}
+}
+</style>
+</head>
+
+<body>
+
+<header>📊 Attendance Admin Panel</header>
+
+<div class="container">
+
+  <!-- Form -->
+  <div class="form-card">
+    <h2 id="formTitle">Create User</h2>
+
+    <input type="text" id="name" placeholder="Full Name">
+    <input type="text" id="phone" placeholder="Phone Number">
+    <input type="text" id="address" placeholder="Address">
+    <input type="email" id="email" placeholder="Email">
+
+    <button id="submitBtn" class="btn-primary" onclick="createUser()">Create User</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-card">
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Address</th>
+          <th>Passcode</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="userTable"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBA_gGITL3vOX_wymV8m3c7h_2kYxUEL0A",
+  authDomain: "email-5e336.firebaseapp.com",
+  projectId: "email-5e336",
+  storageBucket: "email-5e336.appspot.com",
+  messagingSenderId: "561655323170",
+  appId: "1:561655323170:web:42fcf886c34f2d5a16487b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let editId = null;
+
+/* Generate Passcode */
+function generatePasscode(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for(let i=0;i<6;i++){
+    code += chars.charAt(Math.floor(Math.random()*chars.length));
+  }
+  return code;
+}
+
+/* Create User */
+function createUser(){
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  const address = addressEl.value.trim();
+  const email = emailEl.value.trim();
+
+  if(!name || !phone || !address || !email){
+    alert("Fill all fields");
+    return;
+  }
+
+  const passcode = generatePasscode();
+
+  db.ref("users").push({
+    name, phone, address, email, passcode,
+    createdAt: Date.now()
+  });
+
+  alert("User created! Passcode: " + passcode);
+  clearForm();
+}
+
+/* Edit Load */
+function editUser(id, data){
+  editId = id;
+
+  nameEl.value = data.name;
+  phoneEl.value = data.phone;
+  addressEl.value = data.address;
+  emailEl.value = data.email;
+
+  formTitle.innerText = "Edit User";
+  submitBtn.innerText = "Update User";
+  submitBtn.className = "btn-success";
+  submitBtn.onclick = updateUser;
+}
+
+/* Update User */
+function updateUser(){
+  const name = nameEl.value.trim();
+  const phone = phoneEl.value.trim();
+  const address = addressEl.value.trim();
+  const email = emailEl.value.trim();
+
+  db.ref("users/" + editId).update({
+    name, phone, address, email
+  });
+
+  alert("User updated!");
+  clearForm();
+}
+
+/* Delete User */
+function deleteUser(id){
+  if(confirm("Delete this user?")){
+    db.ref("users/" + id).remove();
+  }
+}
+
+/* Clear Form */
+function clearForm(){
+  editId = null;
+  nameEl.value = "";
+  phoneEl.value = "";
+  addressEl.value = "";
+  emailEl.value = "";
+
+  formTitle.innerText = "Create User";
+  submitBtn.innerText = "Create User";
+  submitBtn.className = "btn-primary";
+  submitBtn.onclick = createUser;
+}
+
+/* Shortcuts */
+const nameEl = document.getElementById("name");
+const phoneEl = document.getElementById("phone");
+const addressEl = document.getElementById("address");
+const emailEl = document.getElementById("email");
+const formTitle = document.getElementById("formTitle");
+const submitBtn = document.getElementById("submitBtn");
+
+/* Load Users */
+db.ref("users").on("value", snapshot=>{
+  const table = document.getElementById("userTable");
+  table.innerHTML = "";
+
+  snapshot.forEach(child=>{
+    const data = child.val();
+    const id = child.key;
+
+    table.innerHTML += `
+      <tr>
+        <td>${data.name}</td>
+        <td>${data.phone}</td>
+        <td>${data.email}</td>
+        <td>${data.address}</td>
+        <td><b>${data.passcode}</b></td>
+        <td>
+          <div class="actions">
+            <button onclick='editUser("${id}", ${JSON.stringify(data)})'>✏️</button>
+            <button class="btn-danger" onclick='deleteUser("${id}")'>🗑️</button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Report</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{
+  --primary:#2563eb;
+  --accent:#0ea5e9;
+  --bg:#0f172a;
+  --card:#1e293b;
+  --text:#e2e8f0;
+  --gold:#fbbf24;
+}
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+
+header{
+  padding:16px;
+  text-align:center;
+  background:linear-gradient(135deg,var(--primary),var(--accent));
+  font-weight:bold;
+}
+
+.container{
+  padding:16px;
+  max-width:1100px;
+  margin:auto;
+}
+
+.card{
+  background:var(--card);
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:8px;
+  margin-top:10px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th, td{
+  padding:10px;
+  font-size:14px;
+}
+
+th{ background:var(--primary); }
+
+tr:nth-child(even){ background:#334155; }
+
+.rank1{ color:var(--gold); font-weight:bold; }
+.rank2{ color:#cbd5f5; }
+.rank3{ color:#94a3b8; }
+
+@media(max-width:600px){
+  th, td{ font-size:12px; padding:8px; }
+}
+</style>
+</head>
+
+<body>
+
+<header>📊 Attendance Report (Advanced)</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>Filter by Date</h3>
+    <input type="date" id="dateFilter" onchange="loadReport()">
+  </div>
+
+  <!-- Leadership -->
+  <div class="card">
+    <h3>🏆 Leadership Ladder</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Attendance</th>
+          <th>Last Seen</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard"></tbody>
+    </table>
+  </div>
+
+  <!-- Percentage -->
+  <div class="card">
+    <h3>📈 Attendance Percentage</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Total Days</th>
+          <th>Percentage</th>
+        </tr>
+      </thead>
+      <tbody id="percentageTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Daily Time Ranking -->
+  <div class="card">
+    <h3>⏰ Daily Arrival Ranking</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Name</th>
+          <th>Check-in Time</th>
+        </tr>
+      </thead>
+      <tbody id="timeRanking"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBA_gGITL3vOX_wymV8m3c7h_2kYxUEL0A",
+  authDomain: "email-5e336.firebaseapp.com",
+  projectId: "email-5e336",
+  storageBucket: "email-5e336.appspot.com",
+  messagingSenderId: "561655323170",
+  appId: "1:561655323170:web:42fcf886c34f2d5a16487b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* Load Report */
+function loadReport(){
+  const selectedDate = document.getElementById("dateFilter").value;
+
+  db.ref("users").once("value", usersSnap=>{
+    db.ref("attendance").once("value", attSnap=>{
+
+      let users = {};
+      let totalDays = 0;
+
+      usersSnap.forEach(u=>{
+        users[u.key] = {
+          name: u.val().name,
+          count: 0,
+          lastSeen: "-"
+        };
+      });
+
+      attSnap.forEach(dateSnap=>{
+        totalDays++;
+
+        dateSnap.forEach(userSnap=>{
+          const d = userSnap.val();
+
+          if(users[userSnap.key]){
+            users[userSnap.key].count++;
+            users[userSnap.key].lastSeen = d.date + " " + d.time;
+          }
+        });
+      });
+
+      renderMain(users, totalDays);
+
+      if(selectedDate){
+        loadDailyRanking(selectedDate);
+      } else {
+        document.getElementById("timeRanking").innerHTML =
+          "<tr><td colspan='3'>Select a date to view ranking</td></tr>";
+      }
+
+    });
+  });
+}
+
+/* Render Main Tables */
+function renderMain(users, totalDays){
+  const leaderboard = document.getElementById("leaderboard");
+  const percentageTable = document.getElementById("percentageTable");
+
+  leaderboard.innerHTML = "";
+  percentageTable.innerHTML = "";
+
+  let arr = Object.values(users);
+  arr.sort((a,b)=> b.count - a.count);
+
+  arr.forEach((u,index)=>{
+    let rankClass = index===0?"rank1":index===1?"rank2":index===2?"rank3":"";
+
+    leaderboard.innerHTML += `
+      <tr class="${rankClass}">
+        <td>${index+1}</td>
+        <td>${u.name}</td>
+        <td>${u.count}</td>
+        <td>${u.lastSeen}</td>
+      </tr>
+    `;
+
+    let percent = totalDays ? ((u.count/totalDays)*100).toFixed(1) : 0;
+
+    percentageTable.innerHTML += `
+      <tr>
+        <td>${u.name}</td>
+        <td>${u.count}</td>
+        <td>${percent}%</td>
+      </tr>
+    `;
+  });
+}
+
+/* Daily Time Ranking */
+function loadDailyRanking(date){
+  db.ref("attendance/" + date).once("value", snap=>{
+    let arr = [];
+
+    snap.forEach(userSnap=>{
+      const d = userSnap.val();
+      arr.push({
+        name: d.name,
+        time: d.time,
+        timestamp: d.timestamp
+      });
+    });
+
+    arr.sort((a,b)=> a.timestamp - b.timestamp);
+
+    const table = document.getElementById("timeRanking");
+    table.innerHTML = "";
+
+    arr.forEach((u,i)=>{
+      table.innerHTML += `
+        <tr>
+          <td>${i+1}</td>
+          <td>${u.name}</td>
+          <td>${u.time}</td>
+        </tr>
+      `;
+    });
+  });
+}
+
+// Load initial
+loadReport();
+</script>
+
+</body>
+</html>
