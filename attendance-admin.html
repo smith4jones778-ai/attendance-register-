@@ -3,131 +3,142 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User System</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>Association Admin</title>
 
 <style>
-body{
-  font-family:Poppins,sans-serif;
-  background:#eef4ff;
-  padding:20px;
-}
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #f4f6f9;
+  }
 
-.container{
-  max-width:900px;
-  margin:auto;
-}
+  header {
+    background: #2c3e50;
+    color: white;
+    padding: 15px;
+    text-align: center;
+  }
 
-.card{
-  background:#fff;
-  padding:20px;
-  border-radius:16px;
-  margin-bottom:20px;
-  box-shadow:0 5px 20px rgba(0,0,0,0.05);
-}
+  header img {
+    max-width: 80px;
+    display: block;
+    margin: 0 auto 10px;
+  }
 
-input{
-  width:100%;
-  padding:12px;
-  margin-bottom:10px;
-  border:none;
-  background:#f4f7ff;
-  border-radius:10px;
-}
+  .container {
+    padding: 15px;
+    max-width: 900px;
+    margin: auto;
+  }
 
-button{
-  padding:12px 16px;
-  background:#0a66ff;
-  color:white;
-  border:none;
-  border-radius:10px;
-  cursor:pointer;
-}
+  form {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+  }
 
-button:hover{
-  background:#084dcc;
-}
+  input {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+  }
 
-table{
-  width:100%;
-  border-collapse:collapse;
-}
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #27ae60;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+  }
 
-th,td{
-  padding:12px;
-  border-bottom:1px solid #eee;
-}
+  .search-box {
+    margin-bottom: 15px;
+  }
 
-th{
-  background:#f8fbff;
-}
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+  }
 
-.code{
-  color:#0a66ff;
-  font-weight:600;
-}
+  th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: left;
+  }
 
-#toast{
-  position:fixed;
-  top:20px;
-  right:20px;
-  background:#0a66ff;
-  color:white;
-  padding:12px 16px;
-  border-radius:10px;
-  display:none;
-}
+  /* Mobile cards */
+  @media (max-width: 600px) {
+    table, thead, tbody, th, td, tr {
+      display: block;
+    }
+
+    tr {
+      margin-bottom: 10px;
+      background: white;
+      border-radius: 8px;
+      padding: 10px;
+    }
+
+    td {
+      border: none;
+      padding: 5px 0;
+    }
+
+    th {
+      display: none;
+    }
+  }
 </style>
 </head>
 
 <body>
 
-<div id="toast"></div>
+<header>
+  <!-- Replace with your logo -->
+  <img src="https://via.placeholder.com/80" alt="Logo">
+  <h2>Association Admin Panel</h2>
+</header>
 
 <div class="container">
 
-<h2>Create User</h2>
+  <form id="userForm">
+    <input type="text" id="name" placeholder="Full Name" required>
+    <input type="text" id="phone" placeholder="Phone Number" required>
+    <input type="email" id="email" placeholder="Email Address" required>
+    <input type="text" id="address" placeholder="Contact Address" required>
+    <input type="text" id="membership" placeholder="Membership Type" required>
+    <button type="submit">Create Member</button>
+  </form>
 
-<div class="card">
+  <input type="text" id="search" class="search-box" placeholder="Search by name, phone or address">
 
-<input type="text" id="name" placeholder="Full Name">
-<input type="text" id="phone" placeholder="Phone Number">
-<input type="text" id="department" placeholder="Department">
-<input type="text" id="passcode" placeholder="Auto Passcode" readonly>
-
-<button onclick="createUser()">Create User</button>
-
-</div>
-
-<div class="card">
-
-<h2>All Users (Alphabetical Order)</h2>
-
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Phone</th>
-<th>Department</th>
-<th>Passcode</th>
-<th>Date</th>
-</tr>
-</thead>
-
-<tbody id="usersTable"></tbody>
-
-</table>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Email</th>
+        <th>Address</th>
+        <th>Membership</th>
+        <th>Passcode</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
 
 </div>
 
-</div>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
-<script type="module">
-
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
-
+<script>
 const firebaseConfig = {
   apiKey: "AIzaSyCtLoXXW7Rkkja7HSBrkkcGqZsbj7kQLjw",
   authDomain: "year2-9413b.firebaseapp.com",
@@ -135,111 +146,76 @@ const firebaseConfig = {
   projectId: "year2-9413b"
 };
 
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database().ref("users");
 
-function toast(msg){
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.style.display = "block";
-  setTimeout(()=>t.style.display="none",2000);
-}
-
-/* UNIQUE CODE */
-let codes = new Set();
-
-function genCode(){
-  const chars="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let code;
-
-  do{
-    code="";
-    for(let i=0;i<6;i++){
-      code += chars[Math.floor(Math.random()*chars.length)];
-    }
-  }while(codes.has(code));
-
-  codes.add(code);
+// Generate 6-character uppercase alphanumeric passcode
+function generatePasscode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
   return code;
 }
 
-/* SINGLE CLEAN RENDER FUNCTION (IMPORTANT FIX) */
-function renderUsers(users){
+// Add user
+document.getElementById("userForm").addEventListener("submit", function(e) {
+  e.preventDefault();
 
-  users.sort((a,b)=>
-    (a.name || "").localeCompare(b.name || "")
-  );
+  const user = {
+    name: name.value,
+    phone: phone.value,
+    email: email.value,
+    address: address.value,
+    membership: membership.value,
+    passcode: generatePasscode()
+  };
 
-  let html="";
+  db.push(user);
 
-  users.forEach(u=>{
-    html += `
+  alert("User created successfully!");
+
+  this.reset();
+});
+
+// Display users
+db.on("value", snapshot => {
+  const data = snapshot.val();
+  renderTable(data);
+});
+
+function renderTable(data) {
+  const table = document.getElementById("userTable");
+  table.innerHTML = "";
+
+  for (let id in data) {
+    const user = data[id];
+
+    const row = `
       <tr>
-        <td>${u.name || ""}</td>
-        <td>${u.phone || ""}</td>
-        <td>${u.department || "-"}</td>
-        <td class="code">${u.passcode || ""}</td>
-        <td>${new Date(u.createdAt).toLocaleString()}</td>
+        <td>${user.name}</td>
+        <td>${user.phone}</td>
+        <td>${user.email}</td>
+        <td>${user.address}</td>
+        <td>${user.membership}</td>
+        <td>${user.passcode}</td>
       </tr>
     `;
-  });
-
-  document.getElementById("usersTable").innerHTML = html;
+    table.innerHTML += row;
+  }
 }
 
-/* REALTIME LISTENER (FIXED) */
-let allUsers = [];
+// Search filter
+document.getElementById("search").addEventListener("input", function() {
+  const value = this.value.toLowerCase();
+  const rows = document.querySelectorAll("#userTable tr");
 
-onValue(ref(db,"users"), (snap)=>{
-
-  allUsers = [];
-
-  codes.clear();
-
-  snap.forEach(s=>{
-    let d = s.val();
-    allUsers.push(d);
-    codes.add(d.passcode);
+  rows.forEach(row => {
+    const text = row.innerText.toLowerCase();
+    row.style.display = text.includes(value) ? "" : "none";
   });
-
-  renderUsers(allUsers);
-
 });
-
-/* CREATE USER (FIXED FLOW) */
-window.createUser = async function(){
-
-const name = document.getElementById("name").value.trim();
-const phone = document.getElementById("phone").value.trim();
-const department = document.getElementById("department").value.trim();
-
-if(!name || !phone){
-toast("Fill required fields");
-return;
-}
-
-const passcode = genCode();
-
-document.getElementById("passcode").value = passcode;
-
-await set(push(ref(db,"users")),{
-name,
-phone,
-department,
-passcode,
-createdAt:Date.now()
-});
-
-/* IMPORTANT: UI refresh is automatic via onValue */
-toast("User created successfully ✅");
-
-document.getElementById("name").value="";
-document.getElementById("phone").value="";
-document.getElementById("department").value="";
-document.getElementById("passcode").value="";
-
-};
-
 </script>
 
 </body>
