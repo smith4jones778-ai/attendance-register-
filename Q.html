@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Auto User Generator</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:#e2e8f0;
+}
+
+header{
+  padding:16px;
+  text-align:center;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  font-weight:bold;
+}
+
+.container{
+  padding:16px;
+  max-width:900px;
+  margin:auto;
+}
+
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+th,td{
+  padding:10px;
+}
+
+th{
+  background:#2563eb;
+}
+
+tr:nth-child(even){
+  background:#334155;
+}
+</style>
+</head>
+
+<body>
+
+<header>⚡ Auto Generate 20 Users</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>Generated Users</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Passcode</th>
+        </tr>
+      </thead>
+      <tbody id="table"></tbody>
+    </table>
+  </div>
+
+</div>
+
+<script>
+// Firebase config
+const firebaseConfig = {
+  apiKey: "AIzaSyBA_gGITL3vOX_wymV8m3c7h_2kYxUEL0A",
+  authDomain: "email-5e336.firebaseapp.com",
+  projectId: "email-5e336",
+  storageBucket: "email-5e336.appspot.com",
+  messagingSenderId: "561655323170",
+  appId: "1:561655323170:web:42fcf886c34f2d5a16487b"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+/* Generate passcode */
+function generatePasscode(){
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for(let i=0;i<6;i++){
+    code += chars[Math.floor(Math.random()*chars.length)];
+  }
+  return code;
+}
+
+/* Generate Users */
+function generateUsers(){
+  const names = [
+    "John Doe","Jane Smith","Michael Johnson","Sarah Brown","David Wilson",
+    "Emma Davis","Daniel Miller","Olivia Taylor","James Anderson","Sophia Thomas",
+    "Benjamin Moore","Isabella Martin","Lucas Jackson","Mia White","Henry Harris",
+    "Amelia Clark","Alexander Lewis","Charlotte Walker","Ethan Hall","Ava Allen"
+  ];
+
+  const table = document.getElementById("table");
+  table.innerHTML = "";
+
+  names.forEach((name, i)=>{
+    const passcode = generatePasscode();
+
+    const user = {
+      name: name,
+      phone: "08000000" + (100 + i),
+      address: "Sample Address " + (i+1),
+      email: "user" + (i+1) + "@mail.com",
+      passcode: passcode,
+      createdAt: Date.now()
+    };
+
+    // Save to Firebase
+    db.ref("users").push(user);
+
+    // Display
+    table.innerHTML += `
+      <tr>
+        <td>${user.name}</td>
+        <td>${user.phone}</td>
+        <td>${user.email}</td>
+        <td><b>${user.passcode}</b></td>
+      </tr>
+    `;
+  });
+}
+
+/* Prevent duplicate generation */
+db.ref("users").once("value", snap=>{
+  if(snap.exists()){
+    if(confirm("Users already exist. Generate another 20?")){
+      generateUsers();
+    }
+  } else {
+    generateUsers();
+  }
+});
+</script>
+
+</body>
+</html>
