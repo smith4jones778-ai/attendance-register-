@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Association Attendance System</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+}
+
+body{
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#eef5ff,#ffffff);
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    padding:20px;
+}
+
+.container{
+    width:100%;
+    max-width:500px;
+    background:#fff;
+    border-radius:30px;
+    padding:30px 20px;
+    box-shadow:0 10px 40px rgba(0,0,0,0.08);
+}
+
+.logo-box{
+    text-align:center;
+    margin-bottom:20px;
+}
+
+.logo-box img{
+    width:90px;
+    height:90px;
+    border-radius:50%;
+    object-fit:cover;
+    margin-bottom:15px;
+    border:4px solid #0a66ff;
+}
+
+.logo-box h1{
+    font-size:28px;
+    color:#0a1b45;
+    font-weight:700;
+}
+
+.logo-box p{
+    color:#6b7280;
+    margin-top:8px;
+    line-height:1.6;
+    font-size:15px;
+}
+
+.attendance-box{
+    margin-top:30px;
+}
+
+.attendance-box h2{
+    text-align:center;
+    color:#0a1b45;
+    margin-bottom:20px;
+    font-size:24px;
+}
+
+.passcode-input{
+    width:100%;
+    height:80px;
+    border:none;
+    border-radius:20px;
+    background:#f4f7ff;
+    font-size:36px;
+    text-align:center;
+    letter-spacing:12px;
+    outline:none;
+    padding:10px;
+    color:#0a1b45;
+    font-weight:700;
+    box-shadow:inset 0 0 10px rgba(0,0,0,0.05);
+}
+
+.passcode-input::placeholder{
+    color:#b5bdd1;
+    letter-spacing:3px;
+    font-size:18px;
+}
+
+.submit-btn{
+    width:100%;
+    margin-top:25px;
+    height:65px;
+    border:none;
+    border-radius:18px;
+    background:#0a66ff;
+    color:#fff;
+    font-size:20px;
+    font-weight:600;
+    cursor:pointer;
+    transition:0.3s ease;
+}
+
+.submit-btn:hover{
+    background:#084dcc;
+}
+
+.message{
+    margin-top:20px;
+    text-align:center;
+    font-size:16px;
+    font-weight:600;
+}
+
+.success{
+    color:green;
+}
+
+.error{
+    color:red;
+}
+
+.info-box{
+    margin-top:30px;
+    background:#f8fbff;
+    padding:18px;
+    border-radius:18px;
+}
+
+.info-box h3{
+    margin-bottom:10px;
+    color:#0a1b45;
+}
+
+.info-box ul{
+    padding-left:18px;
+    color:#4b5563;
+    line-height:1.8;
+}
+
+.footer{
+    margin-top:25px;
+    text-align:center;
+    font-size:13px;
+    color:#8b93a7;
+}
+
+@media(max-width:480px){
+
+.passcode-input{
+    height:75px;
+    font-size:30px;
+}
+
+.logo-box h1{
+    font-size:24px;
+}
+
+.submit-btn{
+    font-size:18px;
+}
+
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="logo-box">
+        <img src="logo.png" alt="Association Logo">
+        <h1>Great Leaders Association</h1>
+        <p>
+            Welcome to the official attendance portal. Enter your secure attendance passcode below to mark your attendance for today's meeting.
+        </p>
+    </div>
+
+    <div class="attendance-box">
+        <h2>Attendance Check-In</h2>
+
+        <input
+            type="password"
+            id="passcode"
+            class="passcode-input"
+            placeholder="Enter Passcode"
+            maxlength="6"
+        />
+
+        <button class="submit-btn" onclick="submitAttendance()">
+            Mark Attendance
+        </button>
+
+        <div id="message" class="message"></div>
+    </div>
+
+    <div class="info-box">
+        <h3>Attendance Guidelines</h3>
+        <ul>
+            <li>Attendance can only be submitted once per meeting.</li>
+            <li>Your attendance time is recorded automatically.</li>
+            <li>Late attendance may affect leaderboard ranking.</li>
+            <li>Keep your passcode confidential.</li>
+        </ul>
+    </div>
+
+    <div class="footer">
+        Real-Time Attendance System Powered by Firebase
+    </div>
+
+</div>
+
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import {
+    getDatabase,
+    ref,
+    get,
+    set,
+    update,
+    child,
+    push
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+    apiKey: "YOUR_API_KEY",
+    authDomain: "YOUR_AUTH_DOMAIN",
+    databaseURL: "YOUR_DATABASE_URL",
+    projectId: "YOUR_PROJECT_ID",
+    storageBucket: "YOUR_STORAGE_BUCKET",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId: "YOUR_APP_ID"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
+
+window.submitAttendance = async function(){
+
+    const passcode = document.getElementById('passcode').value.trim();
+    const message = document.getElementById('message');
+
+    message.innerHTML = "";
+
+    if(passcode === ""){
+        message.innerHTML = "Please enter your passcode";
+        message.className = "message error";
+        return;
+    }
+
+    try{
+
+        const usersRef = ref(db, 'users');
+        const snapshot = await get(usersRef);
+
+        if(snapshot.exists()){
+
+            let foundUser = null;
+
+            snapshot.forEach((childSnap)=>{
+                const data = childSnap.val();
+
+                if(data.passcode === passcode){
+                    foundUser = {
+                        id: childSnap.key,
+                        ...data
+                    };
+                }
+            });
+
+            if(foundUser){
+
+                const today = new Date();
+                const date = today.toLocaleDateString();
+                const time = today.toLocaleTimeString();
+
+                const attendanceId = `${foundUser.id}_${date}`;
+
+                const attendanceRef = ref(db, 'attendance/' + attendanceId);
+                const attendanceSnap = await get(attendanceRef);
+
+                if(attendanceSnap.exists()){
+                    message.innerHTML = `Attendance already marked today for ${foundUser.name}`;
+                    message.className = "message error";
+                    return;
+                }
+
+                await set(attendanceRef, {
+                    userId: foundUser.id,
+                    name: foundUser.name,
+                    passcode: foundUser.passcode,
+                    date: date,
+                    time: time,
+                    timestamp: Date.now(),
+                    status: 'Present'
+                });
+
+                const score = foundUser.score ? foundUser.score + 1 : 1;
+
+                await update(ref(db, 'users/' + foundUser.id), {
+                    score: score,
+                    lastAttendance: date
+                });
+
+                message.innerHTML = `Welcome ${foundUser.name}. Attendance submitted successfully.`;
+                message.className = "message success";
+
+                document.getElementById('passcode').value = "";
+
+            }else{
+                message.innerHTML = "Invalid passcode";
+                message.className = "message error";
+            }
+
+        }
+
+    }catch(error){
+        console.error(error);
+        message.innerHTML = "An error occurred. Please try again.";
+        message.className = "message error";
+    }
+
+}
+
+</script>
+
+</body>
+</html>
