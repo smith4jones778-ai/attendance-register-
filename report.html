@@ -3,267 +3,333 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attendance Report</title>
+<title>Smart Attendance Report</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
 <style>
 :root{
+  --bg:#0b1220;
+  --card:#111a2e;
   --primary:#2563eb;
   --accent:#0ea5e9;
-  --bg:#0f172a;
-  --card:#1e293b;
   --text:#e2e8f0;
-  --gold:#fbbf24;
+  --muted:#94a3b8;
 }
 
 body{
   margin:0;
-  font-family:Arial;
+  font-family:Arial, sans-serif;
   background:var(--bg);
   color:var(--text);
 }
 
+/* HEADER */
 header{
-  padding:16px;
+  padding:18px;
   text-align:center;
+  font-size:20px;
+  font-weight:bold;
   background:linear-gradient(135deg,var(--primary),var(--accent));
+}
+
+/* TOGGLE BAR */
+.toggle-bar{
+  display:flex;
+  justify-content:center;
+  gap:10px;
+  padding:15px;
+  flex-wrap:wrap;
+}
+
+.toggle-btn{
+  padding:10px 16px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+  background:#1e293b;
+  color:var(--text);
+  transition:.3s;
   font-weight:bold;
 }
 
-.container{
-  padding:16px;
-  max-width:1100px;
-  margin:auto;
+.toggle-btn.active{
+  background:var(--primary);
 }
 
+/* CONTAINER */
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:15px;
+}
+
+/* CARD */
 .card{
   background:var(--card);
   padding:15px;
-  border-radius:12px;
+  border-radius:14px;
   margin-bottom:15px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.3);
 }
 
+/* INPUT */
 input{
   width:100%;
-  padding:12px;
+  padding:10px;
+  margin-top:8px;
   border:none;
   border-radius:8px;
-  margin-top:10px;
+  outline:none;
 }
 
+/* TABLE */
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:10px;
+  overflow:hidden;
 }
 
-th, td{
+th,td{
   padding:10px;
   font-size:14px;
 }
 
-th{ background:var(--primary); }
+th{
+  background:var(--primary);
+  text-align:left;
+}
 
-tr:nth-child(even){ background:#334155; }
+tr:nth-child(even){
+  background:#1f2a44;
+}
 
-.rank1{ color:var(--gold); font-weight:bold; }
-.rank2{ color:#cbd5f5; }
-.rank3{ color:#94a3b8; }
+/* HIDE SECTION */
+.hidden{
+  display:none;
+}
 
+/* HOVER EFFECT */
+tr:hover{
+  background:#2b3a5c;
+  cursor:pointer;
+}
+
+/* MOBILE */
 @media(max-width:600px){
-  th, td{ font-size:12px; padding:8px; }
+  th,td{font-size:12px;}
 }
 </style>
 </head>
 
 <body>
 
-<header>📊 Attendance Report (Advanced)</header>
+<header>📊 Smart Attendance Dashboard</header>
+
+<!-- TOGGLE -->
+<div class="toggle-bar">
+  <button class="toggle-btn active" onclick="switchTab('users')">👥 Users</button>
+  <button class="toggle-btn" onclick="switchTab('attendance')">📅 Attendance</button>
+</div>
 
 <div class="container">
 
-  <div class="card">
-    <h3>Filter by Date</h3>
-    <input type="date" id="dateFilter" onchange="loadReport()">
-  </div>
+<!-- USERS SECTION -->
+<div id="usersSection" class="card">
 
-  <!-- Leadership -->
-  <div class="card">
-    <h3>🏆 Leadership Ladder</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Name</th>
-          <th>Attendance</th>
-          <th>Last Seen</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboard"></tbody>
-    </table>
-  </div>
+  <h3>Registered Users</h3>
 
-  <!-- Percentage -->
-  <div class="card">
-    <h3>📈 Attendance Percentage</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Total Days</th>
-          <th>Percentage</th>
-        </tr>
-      </thead>
-      <tbody id="percentageTable"></tbody>
-    </table>
-  </div>
+  <input type="text" id="nameFilter" placeholder="Search Name" oninput="filterUser()">
+  <input type="text" id="phoneFilter" placeholder="Search Phone" oninput="filterUser()">
+  <input type="text" id="addressFilter" placeholder="Search Address" oninput="filterUser()">
 
-  <!-- Daily Time Ranking -->
-  <div class="card">
-    <h3>⏰ Daily Arrival Ranking</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Rank</th>
-          <th>Name</th>
-          <th>Check-in Time</th>
-        </tr>
-      </thead>
-      <tbody id="timeRanking"></tbody>
-    </table>
-  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Phone</th>
+        <th>Address</th>
+      </tr>
+    </thead>
+    <tbody id="userList"></tbody>
+  </table>
+</div>
+
+<!-- ATTENDANCE SECTION -->
+<div id="attendanceSection" class="card hidden">
+
+  <h3>Attendance Records</h3>
+
+  <input type="date" id="dateFilter" onchange="loadByDate()">
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="history"></tbody>
+  </table>
+
+</div>
 
 </div>
 
 <script>
-// Firebase
+
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyBA_gGITL3vOX_wymV8m3c7h_2kYxUEL0A",
   authDomain: "email-5e336.firebaseapp.com",
   projectId: "email-5e336",
-  storageBucket: "email-5e336.appspot.com",
-  messagingSenderId: "561655323170",
-  appId: "1:561655323170:web:42fcf886c34f2d5a16487b"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-/* Load Report */
-function loadReport(){
-  const selectedDate = document.getElementById("dateFilter").value;
+let allUsers = {};
+let allAttendance = {};
 
-  db.ref("users").once("value", usersSnap=>{
-    db.ref("attendance").once("value", attSnap=>{
+/* TOGGLE FUNCTION */
+function switchTab(tab){
 
-      let users = {};
-      let totalDays = 0;
+  document.querySelectorAll('.toggle-btn').forEach(b=>b.classList.remove('active'));
 
-      usersSnap.forEach(u=>{
-        users[u.key] = {
-          name: u.val().name,
-          count: 0,
-          lastSeen: "-"
-        };
+  if(tab === 'users'){
+    document.getElementById("usersSection").classList.remove("hidden");
+    document.getElementById("attendanceSection").classList.add("hidden");
+    document.querySelectorAll('.toggle-btn')[0].classList.add('active');
+  }
+
+  if(tab === 'attendance'){
+    document.getElementById("attendanceSection").classList.remove("hidden");
+    document.getElementById("usersSection").classList.add("hidden");
+    document.querySelectorAll('.toggle-btn')[1].classList.add('active');
+  }
+}
+
+/* INIT DATA */
+function init(){
+  db.ref("users").once("value", u=>{
+    db.ref("attendance").once("value", a=>{
+
+      u.forEach(x=>{
+        allUsers[x.key] = x.val();
       });
 
-      attSnap.forEach(dateSnap=>{
-        totalDays++;
-
-        dateSnap.forEach(userSnap=>{
-          const d = userSnap.val();
-
-          if(users[userSnap.key]){
-            users[userSnap.key].count++;
-            users[userSnap.key].lastSeen = d.date + " " + d.time;
-          }
-        });
+      a.forEach(x=>{
+        allAttendance[x.key] = x.val();
       });
 
-      renderMain(users, totalDays);
-
-      if(selectedDate){
-        loadDailyRanking(selectedDate);
-      } else {
-        document.getElementById("timeRanking").innerHTML =
-          "<tr><td colspan='3'>Select a date to view ranking</td></tr>";
-      }
-
+      renderUsers(allUsers);
     });
   });
 }
 
-/* Render Main Tables */
-function renderMain(users, totalDays){
-  const leaderboard = document.getElementById("leaderboard");
-  const percentageTable = document.getElementById("percentageTable");
+/* RENDER USERS */
+function renderUsers(users){
+  const table = document.getElementById("userList");
+  table.innerHTML = "";
 
-  leaderboard.innerHTML = "";
-  percentageTable.innerHTML = "";
-
-  let arr = Object.values(users);
-  arr.sort((a,b)=> b.count - a.count);
-
-  arr.forEach((u,index)=>{
-    let rankClass = index===0?"rank1":index===1?"rank2":index===2?"rank3":"";
-
-    leaderboard.innerHTML += `
-      <tr class="${rankClass}">
-        <td>${index+1}</td>
+  Object.entries(users).forEach(([id,u])=>{
+    table.innerHTML += `
+      <tr onclick="showUserHistory('${id}')">
         <td>${u.name}</td>
-        <td>${u.count}</td>
-        <td>${u.lastSeen}</td>
-      </tr>
-    `;
-
-    let percent = totalDays ? ((u.count/totalDays)*100).toFixed(1) : 0;
-
-    percentageTable.innerHTML += `
-      <tr>
-        <td>${u.name}</td>
-        <td>${u.count}</td>
-        <td>${percent}%</td>
+        <td>${u.phone}</td>
+        <td>${u.address}</td>
       </tr>
     `;
   });
 }
 
-/* Daily Time Ranking */
-function loadDailyRanking(date){
-  db.ref("attendance/" + date).once("value", snap=>{
-    let arr = [];
+/* FILTER USERS */
+function filterUser(){
+  const name = nameFilter.value.toLowerCase();
+  const phone = phoneFilter.value.toLowerCase();
+  const address = addressFilter.value.toLowerCase();
 
-    snap.forEach(userSnap=>{
-      const d = userSnap.val();
-      arr.push({
-        name: d.name,
-        time: d.time,
-        timestamp: d.timestamp
-      });
-    });
+  let filtered = {};
 
-    arr.sort((a,b)=> a.timestamp - b.timestamp);
+  Object.entries(allUsers).forEach(([id,u])=>{
+    if(
+      u.name.toLowerCase().includes(name) &&
+      u.phone.toLowerCase().includes(phone) &&
+      u.address.toLowerCase().includes(address)
+    ){
+      filtered[id] = u;
+    }
+  });
 
-    const table = document.getElementById("timeRanking");
-    table.innerHTML = "";
+  renderUsers(filtered);
+}
 
-    arr.forEach((u,i)=>{
+/* USER HISTORY */
+function showUserHistory(userId){
+  const table = document.getElementById("history");
+  table.innerHTML = "";
+
+  let found = false;
+
+  Object.entries(allAttendance).forEach(([date, users])=>{
+    if(users[userId]){
+      found = true;
+      const d = users[userId];
+
       table.innerHTML += `
         <tr>
-          <td>${i+1}</td>
-          <td>${u.name}</td>
-          <td>${u.time}</td>
+          <td>${d.name}</td>
+          <td>${date}</td>
+          <td>${d.time}</td>
         </tr>
       `;
-    });
+    }
+  });
+
+  if(!found){
+    table.innerHTML = "<tr><td colspan='3'>No records</td></tr>";
+  }
+
+  switchTab('attendance');
+}
+
+/* DATE FILTER */
+function loadByDate(){
+  const raw = document.getElementById("dateFilter").value;
+  const table = document.getElementById("history");
+
+  table.innerHTML = "";
+
+  if(!raw){
+    table.innerHTML = "<tr><td colspan='3'>Select a date</td></tr>";
+    return;
+  }
+
+  const key = raw.split("-")[0] + "-" +
+              parseInt(raw.split("-")[1]) + "-" +
+              parseInt(raw.split("-")[2]);
+
+  if(!allAttendance[key]){
+    table.innerHTML = "<tr><td colspan='3'>No attendance</td></tr>";
+    return;
+  }
+
+  Object.values(allAttendance[key]).forEach(d=>{
+    table.innerHTML += `
+      <tr>
+        <td>${d.name}</td>
+        <td>${key}</td>
+        <td>${d.time}</td>
+      </tr>
+    `;
   });
 }
 
-// Load initial
-loadReport();
+init();
+
 </script>
 
 </body>
