@@ -3,103 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attendance Admin Dashboard</title>
+<title>User Management System</title>
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
 *{
   margin:0;
   padding:0;
   box-sizing:border-box;
+  font-family:'Poppins',sans-serif;
 }
 
 body{
-  font-family:'Poppins',sans-serif;
   background:#eef4ff;
-  color:#111827;
-}
-
-/* LAYOUT */
-.dashboard{
-  display:flex;
-  min-height:100vh;
-}
-
-/* SIDEBAR */
-.sidebar{
-  width:260px;
-  background:#0a1b45;
-  color:white;
-  padding:25px;
-}
-
-.sidebar h2{
-  margin-bottom:30px;
-}
-
-.sidebar ul{
-  list-style:none;
-}
-
-.sidebar ul li{
-  padding:14px;
-  margin-bottom:10px;
-  background:rgba(255,255,255,0.08);
-  border-radius:10px;
-  cursor:pointer;
-}
-
-/* MAIN */
-.main-content{
-  flex:1;
   padding:20px;
 }
 
-.topbar{
-  background:white;
-  padding:20px;
-  border-radius:16px;
+/* CONTAINER */
+.container{
+  max-width:1000px;
+  margin:auto;
+}
+
+/* HEADER */
+h1{
   margin-bottom:20px;
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  color:#0a1b45;
 }
 
-.button{
-  background:#0a66ff;
-  color:white;
-  border:none;
-  padding:12px 18px;
-  border-radius:10px;
-  cursor:pointer;
-}
-
-.button:hover{
-  background:#084dcc;
-}
-
-/* CARDS */
-.stats-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-  gap:15px;
-  margin-bottom:20px;
-}
-
+/* CARD */
 .card{
   background:white;
   padding:20px;
   border-radius:16px;
-  box-shadow:0 5px 15px rgba(0,0,0,0.05);
-}
-
-/* SECTIONS */
-.section{
-  background:white;
-  padding:20px;
-  border-radius:16px;
+  box-shadow:0 5px 20px rgba(0,0,0,0.05);
   margin-bottom:20px;
 }
 
@@ -107,7 +45,7 @@ body{
 .form-grid{
   display:grid;
   grid-template-columns:1fr 1fr;
-  gap:10px;
+  gap:12px;
 }
 
 input{
@@ -115,6 +53,22 @@ input{
   border:none;
   background:#f4f7ff;
   border-radius:10px;
+  font-size:14px;
+}
+
+/* BUTTON */
+button{
+  margin-top:15px;
+  padding:12px 18px;
+  border:none;
+  border-radius:10px;
+  background:#0a66ff;
+  color:white;
+  cursor:pointer;
+}
+
+button:hover{
+  background:#084dcc;
 }
 
 /* TABLE */
@@ -131,6 +85,13 @@ th,td{
 
 th{
   background:#f8fbff;
+  color:#0a1b45;
+}
+
+/* PASSCODE */
+.code{
+  font-weight:600;
+  color:#0a66ff;
 }
 
 /* TOAST */
@@ -140,22 +101,13 @@ th{
   right:20px;
   background:#0a66ff;
   color:white;
-  padding:12px 18px;
+  padding:12px 16px;
   border-radius:10px;
   display:none;
-  z-index:9999;
 }
 
 /* MOBILE */
-@media(max-width:900px){
-  .dashboard{
-    flex-direction:column;
-  }
-
-  .sidebar{
-    width:100%;
-  }
-
+@media(max-width:700px){
   .form-grid{
     grid-template-columns:1fr;
   }
@@ -167,42 +119,13 @@ th{
 
 <div id="toast"></div>
 
-<div class="dashboard">
+<div class="container">
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-<h2>Admin Panel</h2>
-<ul>
-<li>Dashboard</li>
-<li>Create User</li>
-<li>Attendance</li>
-<li>Reports</li>
-</ul>
-</div>
-
-<!-- MAIN -->
-<div class="main-content">
-
-<div class="topbar">
-<h1>Attendance Dashboard</h1>
-<button class="button">Start Session</button>
-</div>
-
-<!-- STATS -->
-<div class="stats-grid">
-<div class="card">
-<h3>Total Users</h3>
-<h2 id="totalUsers">0</h2>
-</div>
-
-<div class="card">
-<h3>Attendance</h3>
-<h2 id="totalAttendance">0</h2>
-</div>
-</div>
+<h1>User Management System</h1>
 
 <!-- CREATE USER -->
-<div class="section">
+<div class="card">
+
 <h2>Create User</h2>
 
 <div class="form-grid">
@@ -212,13 +135,14 @@ th{
 <input type="text" id="passcode" placeholder="Auto Passcode" readonly>
 </div>
 
-<br>
-<button class="button" onclick="createUser()">Create User</button>
+<button onclick="createUser()">Create User</button>
+
 </div>
 
-<!-- USERS -->
-<div class="section">
-<h2>All Users</h2>
+<!-- USERS LIST -->
+<div class="card">
+
+<h2>All Created Users</h2>
 
 <table>
 <thead>
@@ -230,28 +154,12 @@ th{
 <th>Date</th>
 </tr>
 </thead>
+
 <tbody id="usersTable"></tbody>
 </table>
-</div>
-
-<!-- ATTENDANCE -->
-<div class="section">
-<h2>Attendance Records</h2>
-
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Date</th>
-<th>Time</th>
-<th>Status</th>
-</tr>
-</thead>
-<tbody id="attendanceTable"></tbody>
-</table>
-</div>
 
 </div>
+
 </div>
 
 <script type="module">
@@ -259,7 +167,7 @@ th{
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
 
-/* FIREBASE CONFIG */
+/* FIREBASE */
 const firebaseConfig = {
   apiKey: "AIzaSyCtLoXXW7Rkkja7HSBrkkcGqZsbj7kQLjw",
   authDomain: "year2-9413b.firebaseapp.com",
@@ -271,18 +179,17 @@ const app = initializeApp(firebaseConfig);
 const db = getDatabase(app);
 
 /* TOAST */
-function toast(msg,color="#0a66ff"){
+function toast(msg){
   const t = document.getElementById("toast");
   t.innerText = msg;
-  t.style.background = color;
   t.style.display = "block";
-  setTimeout(()=>t.style.display="none",2500);
+  setTimeout(()=>t.style.display="none",2000);
 }
 
-/* PASSCODE SYSTEM */
-let codes = new Set();
+/* PASSCODE GENERATOR (NO DUPLICATE) */
+let existingCodes = new Set();
 
-function generateCode(){
+function generatePasscode(){
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
   let code;
 
@@ -291,67 +198,41 @@ function generateCode(){
     for(let i=0;i<6;i++){
       code += chars[Math.floor(Math.random()*chars.length)];
     }
-  }while(codes.has(code));
+  }while(existingCodes.has(code));
 
-  codes.add(code);
+  existingCodes.add(code);
   return code;
 }
 
-/* LOAD FROM FIREBASE (REAL SOURCE OF TRUTH) */
-function loadData(){
+/* REAL-TIME LOAD USERS */
+function loadUsers(){
 
-onValue(ref(db,"users"), (snap)=>{
+  onValue(ref(db,"users"), (snapshot)=>{
 
-let html = "";
-let count = 0;
+    let html = "";
 
-codes.clear();
+    existingCodes.clear();
 
-snap.forEach(s=>{
-count++;
-let d = s.val();
+    snapshot.forEach(child=>{
 
-codes.add(d.passcode);
+      const data = child.val();
 
-html += `
-<tr>
-<td>${d.name}</td>
-<td>${d.phone}</td>
-<td>${d.department || "-"}</td>
-<td><b>${d.passcode}</b></td>
-<td>${new Date(d.createdAt).toLocaleString()}</td>
-</tr>
-`;
-});
+      existingCodes.add(data.passcode);
 
-document.getElementById("usersTable").innerHTML = html;
-document.getElementById("totalUsers").innerText = count;
+      html += `
+        <tr>
+          <td>${data.name}</td>
+          <td>${data.phone}</td>
+          <td>${data.department || "-"}</td>
+          <td class="code">${data.passcode}</td>
+          <td>${new Date(data.createdAt).toLocaleString()}</td>
+        </tr>
+      `;
+    });
 
-});
+    document.getElementById("usersTable").innerHTML = html;
 
-onValue(ref(db,"attendance"), (snap)=>{
-
-let html = "";
-let count = 0;
-
-snap.forEach(s=>{
-count++;
-let d = s.val();
-
-html += `
-<tr>
-<td>${d.name}</td>
-<td>${d.date}</td>
-<td>${d.time}</td>
-<td>${d.status}</td>
-</tr>
-`;
-});
-
-document.getElementById("attendanceTable").innerHTML = html;
-document.getElementById("totalAttendance").innerText = count;
-
-});
+  });
 
 }
 
@@ -363,21 +244,20 @@ const phone = document.getElementById("phone").value.trim();
 const department = document.getElementById("department").value.trim();
 
 if(!name || !phone){
-toast("Fill required fields","red");
+toast("Fill all required fields");
 return;
 }
 
-const passcode = generateCode();
+const passcode = generatePasscode();
 document.getElementById("passcode").value = passcode;
 
-const refUser = push(ref(db,"users"));
+const newUserRef = push(ref(db,"users"));
 
-await set(refUser,{
+await set(newUserRef,{
 name,
 phone,
 department,
 passcode,
-score:0,
 createdAt:Date.now()
 });
 
@@ -391,7 +271,7 @@ document.getElementById("passcode").value="";
 };
 
 /* INIT */
-loadData();
+loadUsers();
 
 </script>
 
