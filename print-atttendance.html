@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Attendance Print Center</title>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+<style>
+:root{
+  --bg:#0f172a;
+  --card:#1e293b;
+  --primary:#2563eb;
+  --text:#e2e8f0;
+}
+
+body{
+  margin:0;
+  font-family:Arial;
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* HEADER */
+header{
+  text-align:center;
+  padding:16px;
+  background:linear-gradient(135deg,#2563eb,#0ea5e9);
+  font-weight:bold;
+}
+
+/* LAYOUT */
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:16px;
+}
+
+.card{
+  background:var(--card);
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
+}
+
+/* INPUTS */
+input{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+}
+
+/* BUTTON */
+button{
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:8px;
+  background:var(--primary);
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+
+/* TABLE */
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:10px;
+}
+
+th,td{
+  padding:10px;
+  font-size:14px;
+}
+
+th{
+  background:var(--primary);
+}
+
+tr:nth-child(even){
+  background:#334155;
+}
+
+/* PRINT ONLY CLEAN VIEW */
+@media print{
+  body{
+    background:white;
+    color:black;
+  }
+
+  header, button{
+    display:none;
+  }
+
+  .card{
+    background:white;
+    box-shadow:none;
+    border:1px solid #ccc;
+  }
+
+  th{
+    background:#ddd;
+    color:black;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>🖨️ Attendance Print Center</header>
+
+<div class="container">
+
+<!-- DATE PRINT -->
+<div class="card">
+  <h3>📅 Print Daily Attendance</h3>
+  <input type="date" id="dateFilter">
+  <button onclick="loadDaily()">Load Day</button>
+  <button onclick="window.print()">Print PDF</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="dailyTable"></tbody>
+  </table>
+</div>
+
+<!-- USER PRINT -->
+<div class="card">
+  <h3>👤 Print Individual Attendance</h3>
+  <input type="text" id="nameSearch" placeholder="Enter Name">
+  <button onclick="loadUser()">Search User</button>
+  <button onclick="window.print()">Print PDF</button>
+
+  <div id="userInfo"></div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Date</th>
+        <th>Time</th>
+      </tr>
+    </thead>
+    <tbody id="userTable"></tbody>
+  </table>
+</div>
+
+</div>
+
+<script>
+
+// Firebase
+const firebaseConfig = {
+  apiKey: "AIzaSyBA_gGITL3vOX_wymV8m3c7h_2kYxUEL0A",
+  authDomain: "email-5e336.firebaseapp.com",
+  projectId: "email-5e336",
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+let users = {};
+let attendance = {};
+
+/* LOAD DATA */
+function init(){
+  db.ref("users").once("value", u=>{
+    db.ref("attendance").once("value", a=>{
+
+      u.forEach(x=>{
+        users[x.key] = x.val();
+      });
+
+      a.forEach(x=>{
+        attendance[x.key] = x.val();
+      });
+
+    });
+  });
+}
+
+/* FORMAT DATE */
+function formatDate(raw){
+  const d = new Date(raw);
+  return d.getFullYear() + "-" + (d.getMonth()+1) + "-" + d.getDate();
+}
+
+/* DAILY ATTENDANCE */
+function loadDaily(){
+  const raw = document.getElementById("dateFilter").value;
+  const table = document.getElementById("dailyTable");
+
+  table.innerHTML = "";
+
+  if(!raw){
+    alert("Select a date");
+    return;
+  }
+
+  const key = formatDate(raw);
+
+  if(!attendance[key]){
+    table.innerHTML = "<tr><td colspan='3'>No attendance for this date</td></tr>";
+    return;
+  }
+
+  Object.values(attendance[key]).forEach(d=>{
+    table.innerHTML += `
+      <tr>
+        <td>${d.name}</td>
+        <td>${key}</td>
+        <td>${d.time}</td>
+      </tr>
+    `;
+  });
+}
+
+/* USER ATTENDANCE */
+function loadUser(){
+  const name = document.getElementById("nameSearch").value.toLowerCase();
+  const table = document.getElementById("userTable");
+  const info = document.getElementById("userInfo");
+
+  table.innerHTML = "";
+  info.innerHTML = "";
+
+  let foundUserId = null;
+  let userData = null;
+
+  Object.entries(users).forEach(([id,u])=>{
+    if(u.name.toLowerCase().includes(name)){
+      foundUserId = id;
+      userData = u;
+    }
+  });
+
+  if(!foundUserId){
+    table.innerHTML = "<tr><td colspan='2'>User not found</td></tr>";
+    return;
+  }
+
+  info.innerHTML = `
+    <h3>${userData.name}</h3>
+    <p>${userData.phone} | ${userData.address}</p>
+  `;
+
+  Object.entries(attendance).forEach(([date,list])=>{
+    if(list[foundUserId]){
+      table.innerHTML += `
+        <tr>
+          <td>${date}</td>
+          <td>${list[foundUserId].time}</td>
+        </tr>
+      `;
+    }
+  });
+}
+
+init();
+
+</script>
+
+</body>
+</html>
